@@ -1,4 +1,5 @@
 @file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.net
 
 import io.ktor.network.selector.*
@@ -20,7 +21,7 @@ data class SsoPacket(
 class SimpleClient(
     private val host: String,
     private val port: Int,
-): PacketHandler(), Closeable {
+) : PacketHandler(), Closeable {
     private val selectorManager = SelectorManager(Dispatchers.IO)
     private lateinit var socket: Socket
 
@@ -51,7 +52,9 @@ class SimpleClient(
             while (!readChannel.isClosedForRead) {
                 val length = readChannel.readInt() - 4
                 if (length > 10 * 1024 * 1024 || length <= 0) error(
-                    "the length header of the package must be between 0~10M bytes. data length:" + Integer.toHexString(length)
+                    "the length header of the package must be between 0~10M bytes. data length:" + Integer.toHexString(
+                        length
+                    )
                 )
                 //println("Receive")
                 readChannel.decode(length) {

@@ -7,10 +7,12 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class APIResult<T>(val code: Int,
-                     val msg: String = "",
-                     @Contextual
-                     val data: T? = null)
+data class APIResult<T>(
+    val code: Int,
+    val msg: String = "",
+    @Contextual
+    val data: T? = null
+)
 
 fun Routing.configIndex() {
     get("/") {

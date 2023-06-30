@@ -46,7 +46,14 @@ fun Routing.configSign() {
     }
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(cmd: String, uin: String, qua: String, seq: Int, buffer: ByteArray, qimei36: String) {
+private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
+    cmd: String,
+    uin: String,
+    qua: String,
+    seq: Int,
+    buffer: ByteArray,
+    qimei36: String
+) {
     var o3did = ""
     val sign = workerPool.work {
         global["qimei36"] = qimei36
@@ -59,11 +66,15 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(cmd: Stri
     if (sign == null) {
         failure(-1, "The instance is occupied and there are no idle instances")
     } else {
-        call.respond(APIResult(0, "success", Sign(
-            sign.token.toHexString(),
-            sign.extra.toHexString(),
-            sign.sign.toHexString(),
-            o3did
-        )))
+        call.respond(
+            APIResult(
+                0, "success", Sign(
+                    sign.token.toHexString(),
+                    sign.extra.toHexString(),
+                    sign.sign.toHexString(),
+                    o3did
+                )
+            )
+        )
     }
 }

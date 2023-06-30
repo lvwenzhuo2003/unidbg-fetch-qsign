@@ -101,7 +101,8 @@ private fun buildData(ssoPacket: SsoPacket) = newBuilder().apply {
         }
 
         val sign = workerPool.work {
-            QQSecuritySign.getSign(this,
+            QQSecuritySign.getSign(
+                this,
                 QUA,
                 ssoPacket.cmd,
                 ssoPacket.data,
@@ -120,9 +121,11 @@ private fun buildData(ssoPacket: SsoPacket) = newBuilder().apply {
             reserve.network_type = 1
             reserve.ip_stack_type = 1
             reserve.message_type = 8
-            reserve.trans_info.add(SSOReserveField.SsoMapEntry(
-                "client_conn_seq", (System.currentTimeMillis() / 1000).toString().toByteArray()
-            ))
+            reserve.trans_info.add(
+                SSOReserveField.SsoMapEntry(
+                    "client_conn_seq", (System.currentTimeMillis() / 1000).toString().toByteArray()
+                )
+            )
             reserve.nt_core_version = 100
             reserve.sso_ip_origin = 2
             reserve.sec_info = SSOReserveField.SsoSecureInfo().also { secureInfo ->

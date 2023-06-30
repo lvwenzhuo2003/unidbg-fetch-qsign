@@ -15,12 +15,12 @@ repositories {
 }
 
 dependencies {
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.2")
+    implementation("io.ktor:ktor-server-core-jvm:2.3.2")
+    implementation("io.ktor:ktor-server-netty-jvm:2.3.2")
     testImplementation(kotlin("test"))
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.3")
-    implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
-    implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 

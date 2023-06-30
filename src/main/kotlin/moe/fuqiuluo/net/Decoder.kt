@@ -64,27 +64,31 @@ private data class PacketState(
     var compressType: Int = 0
 )
 
-private fun ByteArray.decodePacket(callback: (FromService) -> Unit) { reader {
-    if (readInt() == 20140601) return // MSF PING
-    val cipherType = readByte().toInt()
-    if (cipherType == 0) return // HEARTBEAT
-    discardExact(1)
-    val uin = readString(readInt() - 4)
-    requireNotNull(Crypt().decrypt(
-        ByteArray(remaining.toInt()).apply { readAvailable(this) },
-        when(cipherType) {
-            2 -> DEFAULT_TEA_KEY
-            else -> error("Not support the cipherType: $cipherType")
+private fun ByteArray.decodePacket(callback: (FromService) -> Unit) {
+    reader {
+        if (readInt() == 20140601) return // MSF PING
+        val cipherType = readByte().toInt()
+        if (cipherType == 0) return // HEARTBEAT
+        discardExact(1)
+        val uin = readString(readInt() - 4)
+        requireNotNull(
+            Crypt().decrypt(
+                ByteArray(remaining.toInt()).apply { readAvailable(this) },
+                when (cipherType) {
+                    2 -> DEFAULT_TEA_KEY
+                    else -> error("Not support the cipherType: $cipherType")
+                }
+            )
+        ) { "Unable to decrypt packet." }.reader {
+            val state = PacketState()
+            readBytes(readInt() - 4).decodeHead(state)
+            val from = readBytes(readInt() - 4)
+                .decodeBody(state)
+                .also { it.uin = uin }
+            callback.invoke(from)
         }
-    )) { "Unable to decrypt packet." }.reader {
-        val state = PacketState()
-        readBytes(readInt() - 4).decodeHead(state)
-        val from = readBytes(readInt() - 4)
-            .decodeBody(state)
-            .also { it.uin = uin }
-        callback.invoke(from)
     }
-} }
+}
 
 private fun ByteArray.decodeBody(state: PacketState): FromService {
     when (state.compressType) {
@@ -98,15 +102,17 @@ private fun ByteArray.decodeBody(state: PacketState): FromService {
     }
 }
 
-private fun ByteArray.decodeHead(state: PacketState) { reader {
-    state.seq = readInt()
-    if (readInt() != 0) {
-        discardExact(readInt() - 4)
-    } else {
-        discardExact(4)
+private fun ByteArray.decodeHead(state: PacketState) {
+    reader {
+        state.seq = readInt()
+        if (readInt() != 0) {
+            discardExact(readInt() - 4)
+        } else {
+            discardExact(4)
+        }
+        state.cmd = readString(readInt() - 4)
+        state.sessionId = readBytes(readInt() - 4)
+        state.compressType = readInt()
     }
-    state.cmd = readString(readInt() - 4)
-    state.sessionId = readBytes(readInt() - 4)
-    state.compressType = readInt()
-} }
+}
 

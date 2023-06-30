@@ -44,9 +44,9 @@ fun main(args: Array<String>) {
     args().also {
         host = it["host", "Lack of server.host."]
         port = it["port", "Lack of server.port."]
-            .toInt(1 .. 65535) { "Port is out of range." }
+            .toInt(1..65535) { "Port is out of range." }
         workerCount = it["count", "Lack of workerCount(count)."]
-            .toInt(1 .. 100) { "workerCount is out of range." }
+            .toInt(1..100) { "workerCount is out of range." }
         coreLibPath = File(it["library", "Lack of libfekit.so path."])
         if (!coreLibPath.exists() || !coreLibPath.isDirectory) {
             error("libfekit.so file is illegal. Your path must include libfekit.so and libQSec.so!")
@@ -63,10 +63,12 @@ fun main(args: Array<String>) {
 
     workerPool = FixedWorkPool(workerCount, {
         logger.info("Try to construct QSignWorker.")
-        QSecVMWorker(it, coreLibPath, isDynarmic).apply { work {
-            init()
-            FEKit.init(this)
-        } }
+        QSecVMWorker(it, coreLibPath, isDynarmic).apply {
+            work {
+                init()
+                FEKit.init(this)
+            }
+        }
     }, reloadInterval)
 
     embeddedServer(Netty, host = host, port = port, module = Application::init)
