@@ -1,5 +1,3 @@
-# unidbg-fetch-qsign
-
 获取QQSign参数通过Unidbg，开放HTTP API。unidbg-fetch-sign最低从QQ8.9.33（不囊括）开始支持，TIM不支持。
 
 # 切记
@@ -17,7 +15,7 @@
 
 - 解压后cd到解压目录，配置config.json文件。<br>
 
-其中```protocol```中的参数可以从[protocol-versions](https://github.com/RomiChan/protocol-versions)获取
+其中```protocol```中的参数可以从[protocol-versions](https://github.com/RomiChan/protocol-versions)获取！
 
 ```json5
 { // 复制这里的话，请把注释删除
@@ -25,18 +23,9 @@
     "host": "0.0.0.0",
     "port": 8080
   },
-  "uin_list": [ // 未出现在uinList的qq无法访问api!
-    {
-      // uin也就是你的QQQ
-      "uin": 114514,
-      // 该uin对应的android_id
-      "android_id": "1145141919810114",
-      // 不能是空的哦~~
-      "guid":       "5141919810114514",
-      "qimei36":    "8e11b1f9764fa3b43121f6f510001fa1721a"
-    }
-  ],
-  // 实例重载间隔
+  // 注册实例的密钥
+  "key": "114514",
+  // 实例重载间隔（目前没有用）
   // i>=20 i<=50
   "reload_interval": 40, 
   "protocol": {
@@ -100,6 +89,10 @@ services:
       - 8901:8080
 ```
 
+# 你可能需要的项目
+
+- [fix-protocol-version](https://github.com/cssxsh/fix-protocol-version)：基于**mirai**的qsign api对接。
+
 # 使用API
 
 ## [初始化QSign&刷新token](https://github.com/fuqiuluo/unidbg-fetch-qsign/blob/master/refresh_token/README.md)
@@ -107,30 +100,26 @@ services:
 ### 原始energy
 
 ```kotlin
-# http://127.0.0.1:8080/custom_energy?salt=[SALT HEX]&data=[DATA]
+# http://127.0.0.1:8080/custom_energy?uin=[QQ]salt=[SALT HEX]&data=[DATA]
 ```
+| 参数名  |意义|例子|
+|------|-----|-----|
+| UIN  |Bot的QQ号|114514|
+
+> 非专业人员勿用。
 
 ### sign
 
 ```kotlin
 # http://127.0.0.1:8080/sign?uin=[UIN]&qua=[QUA]&cmd=[CMD]&seq=[SEQ]&buffer=[BUFFER]
-[UIN]：Bot的QQ号。实例值：“11451419198”
-[QUA]：是手机QQ运行时，APP的某些信息，一般会在启动时得到。实例值：“V1_AND_SQ_8.9.63_4188_HDBM_T”
-[CMD]：指令类型，在做什么的时候需要的sign就什么时候用，需要注意的是不仅登录的时候需要sign，发信息也需要带sign，所以CMD才有很多种。实例值：“wtlogin.login”
-[SEQ]：意义不明的签名数字戳，看起来像时间戳。实例值：“1848698645”
-[BUFFER]：密文，将byte数组转换为HEX发送。实例值：“0C099F0C099F0C099F”
-
-因为有些时候密文会过长，导致超出get的长度上限，因此sign支持POST
-content-type为application/x-www-form-urlencoded
-正文和GET写法格式一样："uin=" + qq + "&qua=" + qua + "&cmd=" + cmd + "&seq=" + seq + "&buffer=" + DataUtils.byteArrayToHex(buffer)
 ```
 |参数名|意义|例子|
 |-----|-----|-----|
-|UIN|Bot的QQ号|11451419198|
+|UIN|Bot的QQ号|114514|
 |QUA|QQ User-Agent，与QQ版本有关|V1_AND_SQ_8.9.63_4188_HDBM_T|
 |CMD|指令类型，CMD有很多种，目前登录、发信息均需要sign|wtlogin.login|
-|SEQ|数据包序列号，用于指示请求的序列或顺序。它是一个用于跟踪请求的顺序的数值，确保请求按正确的顺序处理|1848698645|
-|BUFFER|数据包包体，不需要长度，将byte数组转换为HEX发送|0C099F0C099F0C099F|
+|SEQ|数据包序列号，用于指示请求的序列或顺序。它是一个用于跟踪请求的顺序的数值，确保请求按正确的顺序处理|2333|
+|BUFFER|数据包包体，不需要长度，将byte数组转换为HEX发送|020348010203040506|
 
 <details>
 <summary>POST的支持</summary>
@@ -147,11 +136,7 @@ POST的内容："uin=" + uin + "&qua=" + qua + "&cmd=" + cmd + "&seq=" + seq + "
 下面这个只是个例子
 
 ```kotlin
-# http://127.0.0.1:8080/energy?&version=[VERSION]&uin=[UIN]&guid=[GUID]&data=[DATA]
-[VERSION]：注意！这里的VERSION指的不是QQ的版本号，而是SDK Version，可以在QQ安装包中找到此信息。实例值：“6.0.0.2534”
-[UIN]：Bot的QQ号。实例值：“11451419198”
-[GUID]：密文，将byte数组转换为HEX发送，一般不会很长，不会超过GET上限。实例值：“0C099F0C099F0C099F”
-[DATA]：实际上是"mode"，QQ在运行时会随机挑选一个作为加密题目，要根据题目算出密文结果才能通过认证。实例值：“810_d”
+# http://127.0.0.1:8080/energy?version=[VERSION]&uin=[UIN]&guid=[GUID]&data=[DATA]
 ```
 
 |参数名|意义|例子|
@@ -163,3 +148,7 @@ POST的内容："uin=" + uin + "&qua=" + qua + "&cmd=" + cmd + "&seq=" + seq + "
 
 # 其他
 - 由于项目的特殊性，我们可能~~随时删除本项目~~且不会做出任何声明
+
+# 奇怪的交际援助
+
+ - 昵称：**[咖啡]**  QQ：1456****68

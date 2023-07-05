@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "moe.fuqiuluo"
-version = "1.1.1"
+version = "1.1.3"
 
 repositories {
     mavenCentral()
@@ -54,12 +54,24 @@ distributions {
     }
 }
 
-distributions {
-    main {
-        contents {
-            from(".") {
-                include("txlib/**")
-            }
+
+
+
+tasks {
+    register("generateProjectFile") {
+        val dir = File("src/main/java/project").apply { mkdirs() }
+        dir.resolve("BuildConfig.java").also {
+            if (!it.exists()) it.createNewFile()
+        }.writer().use {
+            it.write("public class BuildConfig {")
+            it.write("    public static String version = \"${project.version}\";")
+            it.write("}")
         }
+    }
+    named("prepareKotlinBuildScriptModel").configure {
+        dependsOn("generateProjectFile")
+    }
+    named("processResources") {
+        dependsOn("generateProjectFile")
     }
 }
