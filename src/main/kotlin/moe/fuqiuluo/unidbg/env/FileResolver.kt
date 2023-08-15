@@ -10,6 +10,8 @@ import com.github.unidbg.linux.file.SimpleFileIO
 import com.github.unidbg.unix.UnixEmulator
 import moe.fuqiuluo.ext.hex2ByteArray
 import moe.fuqiuluo.unidbg.QSecVM
+import moe.fuqiuluo.unidbg.env.files.fetchCpuInfo
+import moe.fuqiuluo.unidbg.env.files.fetchMemInfo
 import moe.fuqiuluo.unidbg.env.files.fetchStat
 import moe.fuqiuluo.unidbg.env.files.fetchStatus
 import java.io.File
@@ -22,6 +24,14 @@ class FileResolver(
 ): AndroidResolver(sdk) {
     private val tmpFilePath = vm.coreLibPath
     private val uuid = UUID.randomUUID()
+
+    init {
+        for (s in arrayOf("stdin", "stdout", "stderr")) {
+            tmpFilePath.resolve(s).also {
+                if (it.exists()) it.delete()
+            }
+        }
+    }
 
     override fun resolve(emulator: Emulator<AndroidFileIO>, path: String, oflags: Int): FileResult<AndroidFileIO>? {
         val result = super.resolve(emulator, path, oflags)
@@ -47,6 +57,12 @@ class FileResolver(
         }
         if (path == "/proc/stat") {
             return FileResult.success(ByteArrayFileIO(oflags, path, fetchStat()))
+        }
+        if (path == "/proc/meminfo") {
+            return FileResult.success(ByteArrayFileIO(oflags, path, fetchMemInfo()))
+        }
+        if (path == "/proc/cpuinfo") {
+            return FileResult.success(ByteArrayFileIO(oflags, path, fetchCpuInfo()))
         }
         if (path == "/dev/__properties__") {
             return FileResult.success(DirectoryFileIO(oflags, path,
@@ -82,14 +98,20 @@ class FileResolver(
             return FileResult.failed(UnixEmulator.ENOENT)
         }
 
+        if (path == "/proc/self/cmdline") {
+            return FileResult.success(ByteArrayFileIO(oflags, path, "com.tencent.mobileqq".toByteArray()))
+        }
+
         if (path == "/proc") {
             return FileResult.success(DirectoryFileIO(oflags, path,
                 DirectoryFileIO.DirectoryEntry(false, emulator.pid.toString()),
             ))
         }
 
-        if (path == "/proc/meminfo" || path == "/proc/cpuinfo") {
-            return FileResult.failed(UnixEmulator.EACCES)
+        if (path == "/data/app/~~vbcRLwPxS0GyVfqT-nCYrQ==/com.tencent.mobileqq-xJKJPVp9lorkCgR_w5zhyA==/lib/arm64") {
+            return FileResult.success(DirectoryFileIO(oflags, path,
+                DirectoryFileIO.DirectoryEntry(true, "libfekit.so"),
+            ))
         }
 
         if (path == "/proc/${emulator.pid}/cmdline"
@@ -98,8 +120,21 @@ class FileResolver(
             return FileResult.success(ByteArrayFileIO(oflags, path, "com.tencent.mobileqq:MSF".toByteArray()))
         }
 
+        if(path == "/data/app/~~vbcRLwPxS0GyVfqT-nCYrQ==/com.tencent.mobileqq-xJKJPVp9lorkCgR_w5zhyA==/base.apk") {
+            val f = tmpFilePath.resolve("QQ.apk")
+            if (f.exists()) {
+                return FileResult.success(SimpleFileIO(oflags, tmpFilePath.resolve("QQ.apk").also {
+                    if (!it.exists()) it.createNewFile()
+                }, path))
+            } else {
+                return FileResult.failed(UnixEmulator.ENOENT)
+            }
+        }
+
         if (path == "/data/app/~~vbcRLwPxS0GyVfqT-nCYrQ==/com.tencent.mobileqq-xJKJPVp9lorkCgR_w5zhyA==/lib/arm64/libfekit.so") {
-            return FileResult.failed(UnixEmulator.EACCES)
+            return FileResult.success(SimpleFileIO(oflags, tmpFilePath.resolve("libfekit.so").also {
+                if (!it.exists()) it.createNewFile()
+            }, path))
         }
 
         if (path == "/system/bin/sh" || path == "/system/bin/ls" || path == "/system/lib/libc.so") {
